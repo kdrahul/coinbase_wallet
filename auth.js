@@ -87,11 +87,11 @@ const incrementFailCount = (id) => {
   return collection.updateOne({ _id: id }, { $inc: { failed_attempts: 1 } });
 };
 
-const deleteUser = id => {
-    const collection = db().collection('users');
-    return collection.deleteOne({_id: id}).then(() => {
-        return Promise.reject({error: 'user_deleted'});
-    });
+const deleteUser = (id) => {
+  const collection = db().collection('users');
+  return collection.deleteOne({ _id: id }).then(() => {
+    return Promise.reject({ error: 'user_deleted' });
+  });
 };
 
 module.exports = {

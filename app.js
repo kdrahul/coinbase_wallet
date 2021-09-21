@@ -60,26 +60,58 @@ users.post('/login', (req, res) => {
     });
 });
 users.get('/exist', (req, res) => {
-    const walletId = req.body.wallet_id;
-    if(!walletId) return res.status(400).json({error: 'Bad Request'});
-    account.doesExist(walletId).then((userExist) => {
-        res.status(200).send(userExist);
-    }).catch((err) =>{
-        return res.status(400).send(err);
+  const walletId = req.body.wallet_id;
+  if (!walletId) return res.status(400).json({ error: 'Bad Request' });
+  account
+    .doesExist(walletId)
+    .then((userExist) => {
+      res.status(200).send(userExist);
+    })
+    .catch((err) => {
+      return res.status(400).send(err);
     });
 });
 users.delete('/deleteAccount', (req, res) => {
-    const id = req.body.wallet_id;
-    account.removeUser(id).then().catch();
+  const id = req.body.wallet_id;
+  account
+    .removeUser(id)
+    .then(() => {
+      res.status(200).send('Deleted user %s', id);
+    })
+    .catch((err) => {
+      return res.status(400).send(err);
+    });
 });
 users.put('/username', () => {});
 
-utils.put('/details', (req, res) => {});
 utils.get('/tokens', () => {});
 utils.get('/tickers', () => {});
 
-app.get('/', (request, response) => {
-  response.status(200).send('Hello');
+utils.get('/details', (req, res) => {
+  account
+    .getDetails(req.query.wallet_id)
+    .then((details) => {
+      res.status(200).json(details);
+    })
+    .catch((err) => {
+      res.status(400).send(err);
+    });
+});
+
+utils.put('/details', (req, res) => {
+  if (!req.body.data) return res.status(400).json({ error: 'Bad request' });
+  account
+    .saveDetails(req.body.wallet_id, req.body.data)
+    .then((details) => {
+      res.status(200).json(details);
+    })
+    .catch((err) => {
+      res.status(400).send(err);
+    });
+});
+
+app.get('/', (req, res) => {
+  res.status(200).send('Hello');
 });
 
 app.use('/user', users);
