@@ -5,7 +5,9 @@ const crypto = require('crypto');
 
 const register = (walletId, pin) => {
   return account.doesExist(walletId).then((userExist) => {
-    if (!userExist) return createUser(walletId, pin);
+    if (!userExist) {
+      return createUser(walletId, pin);
+    }
     return login(walletId, pin);
   });
 };
@@ -17,7 +19,7 @@ const login = (walletId, pin) => {
     .limit(1)
     .next()
     .then((user) => {
-      if (!user) return Promise.reject({ error: ' User doesnt exist' });
+      if (!user) return Promise.reject({ error: 'user_deleted' });
       return verifyPin(user, pin);
 
       // TODO: Verify pin later to check with credentials
@@ -26,7 +28,7 @@ const login = (walletId, pin) => {
 
 const createUser = (walletId, pin) => {
   const collection = db().collection('users');
-    // Generate token using random number
+  // Generate token using random number
   const token = generateToken();
   const password = token + pin;
   const hashAndSalt = generatePasswordHash(password);
@@ -44,18 +46,17 @@ const createUser = (walletId, pin) => {
 };
 const generateToken = () => {
   return crypto.randomBytes(64).toString('hex');
-}
+};
 
 const generatePasswordHash = (password) => {
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = crypto.createHash('sha1');
   hash.update(password + salt);
   return [hash.digest('hex'), salt];
-}
+};
 
 const verifyPin = (user, pin) => {
   pin = pin || '';
-
   const password = user.token + pin;
   const hash = crypto.createHash('sha1');
   const sha = hash.update(password + user.salt).digest('hex');
@@ -84,6 +85,13 @@ const updateFailCount = (id, counter) => {
 const incrementFailCount = (id) => {
   const collection = db().collection('users');
   return collection.updateOne({ _id: id }, { $inc: { failed_attempts: 1 } });
+};
+
+const deleteUser = id => {
+    const collection = db().collection('users');
+    return collection.deleteOne({_id: id}).then(() => {
+        return Promise.reject({error: 'user_deleted'});
+    });
 };
 
 module.exports = {

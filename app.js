@@ -1,7 +1,8 @@
 let express = require('express');
 let app = express();
-let db = require('./db.js');
+let db = require('./db');
 let auth = require('./auth');
+let account = require('./user_account');
 const port = 5959;
 
 // ERC - 1155 apis
@@ -21,6 +22,7 @@ let transactions = express.Router();
 let utils = express.Router();
 
 app.use(express.json());
+// app.use(express.urlencoded({extended = true})); // For Form data
 
 // Helper functions
 
@@ -45,6 +47,7 @@ users.post('/register', (req, res, next) => {
 users.post('/login', (req, res) => {
   // Alter this based on what they send in their json
   const walletId = req.body.wallet_id;
+  console.log(req.body.wallet_id);
   auth
     .login(walletId, req.body.pin)
     .then((token) => {
@@ -57,9 +60,18 @@ users.post('/login', (req, res) => {
     });
 });
 users.get('/exist', (req, res) => {
-  res.send('No it doesnt');
+    const walletId = req.body.wallet_id;
+    if(!walletId) return res.status(400).json({error: 'Bad Request'});
+    account.doesExist(walletId).then((userExist) => {
+        res.status(200).send(userExist);
+    }).catch((err) =>{
+        return res.status(400).send(err);
+    });
 });
-users.delete('/account', () => {});
+users.delete('/deleteAccount', (req, res) => {
+    const id = req.body.wallet_id;
+    account.removeUser(id).then().catch();
+});
 users.put('/username', () => {});
 
 utils.put('/details', (req, res) => {});
