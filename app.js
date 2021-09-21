@@ -1,6 +1,7 @@
 let express = require('express');
 let app = express();
 let db = require('./db.js');
+let auth = require('./auth');
 const port = 5959;
 
 // ERC - 1155 apis
@@ -19,14 +20,42 @@ let users = express.Router();
 let transactions = express.Router();
 let utils = express.Router();
 
+app.use(express.json());
+
 // Helper functions
 
 transactions.post('/auth', () => {}); // Authenticates the user
 transactions.post('/transaction_details', () => {}); // Gets all the details necessary to Coinbase API
 transactions.post('/store_transaction', () => {}); // Stores each transaction into the database
 
-users.post('/register', () => {});
-users.get('/login', () => {});
+users.post('/register', (req, res, next) => {
+  const walletId = req.body.wallet_id;
+  auth
+    .register(walletId, req.body.pin)
+    .then((token) => {
+      console.log('registered wallet %s', walletId);
+      res.status(200).send(token);
+    })
+    .catch((err) => {
+      if (!['auth_failed', 'user_deleted'].includes(err.error))
+        console.error('error', err);
+      return res.status(400).send(err);
+    });
+});
+users.post('/login', (req, res) => {
+  // Alter this based on what they send in their json
+  const walletId = req.body.wallet_id;
+  auth
+    .login(walletId, req.body.pin)
+    .then((token) => {
+      console.log('authenticated wallet %s' + walletId);
+      res.status(200).send(token);
+    })
+    .catch((err) => {
+      if (err) console.error('error ', err);
+      res.status(400).send(err);
+    });
+});
 users.get('/exist', (req, res) => {
   res.send('No it doesnt');
 });
@@ -49,7 +78,7 @@ app.listen(port, (err) => {
   if (err) {
     console.error('Error ' + err);
   }
-    db();
+  db();
   console.info('server started at ' + port);
 });
 
