@@ -6,7 +6,7 @@ let account = require('./user_account');
 const coinbase = require('coinbase-commerce-node');
 const Client = coinbase.Client;
 const Charge = coinbase.resources.Charge;
-const port = 5959;
+const port = process.env.PORT || 5959;
 
 // ERC - 1155 apis
 // const transferSingle = (req, res) => {};
