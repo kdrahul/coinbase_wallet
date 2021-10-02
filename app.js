@@ -3,6 +3,9 @@ let app = express();
 let db = require('./db');
 let auth = require('./auth');
 let account = require('./user_account');
+const coinbase = require('coinbase-commerce-node');
+const Client = coinbase.Client;
+const Charge = coinbase.resources.Charge;
 const port = 5959;
 
 // ERC - 1155 apis
@@ -26,7 +29,25 @@ app.use(express.json());
 
 // Helper functions
 
-transactions.post('/auth', () => {}); // Authenticates the user
+transactions.post('/charge', (req, res) => {
+  // Fields necessary to create a charge
+  const chargeData = {
+    // REQUIRED
+    name: '', // Title of the product, 100 chars or less
+    description: '', // tag lines, or extra details about product. 200 chars or less
+    pricing_type: '', // Values: no_price | fixed_price
+
+    // Optional
+    // All these go into payment portal for reference to the user
+    // regarding how much they want to pay, and for what item(s) they are paying.
+    local_price: '', // Price in INR or USD or whatever
+    metadata: {}, // Any extra info if necessary
+  };
+    const charge = await Charge.create(chargeData);
+  res.status(200).send(charge);
+    // Each charge expires in 1Hr. That is, user has 1Hr to make that payment.
+});
+
 transactions.post('/transaction_details', () => {}); // Gets all the details necessary to Coinbase API
 transactions.post('/store_transaction', () => {}); // Stores each transaction into the database
 
@@ -111,6 +132,8 @@ utils.put('/details', (req, res) => {
 });
 
 app.get('/', (req, res) => {
+  // Charge is the amount you are charging the customer for a particular item.
+  // Charge == Purchasing price.
   res.status(200).send('Hello');
 });
 
