@@ -43,7 +43,7 @@ transactions.post('/charge', (req, res) => {
     local_price: '', // Price in INR or USD or whatever
     metadata: {}, // Any extra info if necessary
   };
-    const charge = await Charge.create(chargeData);
+    const charge = Charge.create(chargeData);
   res.status(200).send(charge);
     // Each charge expires in 1Hr. That is, user has 1Hr to make that payment.
 });
