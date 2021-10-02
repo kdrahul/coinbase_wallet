@@ -4,7 +4,7 @@ const { MongoClient } = require('mongodb');
 
 let db;
 
-const DB_CONNECT = 'mongodb://localhost:27017/';
+const DB_CONNECT = 'mongodb+srv://rahul:rahul@coinbasewallet.wm5rc.mongodb.net/coinwallet?retryWrites=true&w=majority';
 
 module.exports = () => {
   if (db) {
