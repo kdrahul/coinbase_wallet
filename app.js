@@ -183,13 +183,14 @@ app.get('/', (req, res) => {
   res.status(200).send('Hello');
     console.log(req.body);
 });
-app.post('/',express.raw(), (req, res) => {
+app.post('/', (req, res) => {
   let hello_string = 'hello ' + req.body.name;
     console.log(req.headers);
   res.status(200).send(hello_string);
 });
 
 app.use(rawBody);
+app.use(express.json());
 app.use('/user', users);
 app.use('/util', utils);
 app.use('/payment', transactions);
