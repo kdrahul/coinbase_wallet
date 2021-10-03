@@ -7,6 +7,7 @@ const coinbase = require('coinbase-commerce-node');
 const Client = coinbase.Client;
 const Charge = coinbase.resources.Charge;
 const port = process.env.PORT || 5959;
+const cors = require('cors')({"origin":"*"})
 
 // ERC - 1155 apis
 // const transferSingle = (req, res) => {};
@@ -25,6 +26,7 @@ let transactions = express.Router();
 let utils = express.Router();
 
 app.use(express.json());
+app.use(cors)
 // app.use(express.urlencoded({extended = true})); // For Form data
 
 // Helper functions
@@ -47,6 +49,7 @@ transactions.post('/charge', (req, res) => {
   res.status(200).send(charge);
     // Each charge expires in 1Hr. That is, user has 1Hr to make that payment.
 });
+
 
 transactions.post('/transaction_details', () => {}); // Gets all the details necessary to Coinbase API
 transactions.post('/store_transaction', () => {}); // Stores each transaction into the database
@@ -135,6 +138,10 @@ app.get('/', (req, res) => {
   // Charge is the amount you are charging the customer for a particular item.
   // Charge == Purchasing price.
   res.status(200).send('Hello');
+});
+app.post('/',(req, res) => {
+    let hello_string = "hello " + req.body.name;
+    res.status(200).send(hello_string);
 });
 
 app.use('/user', users);
