@@ -190,7 +190,6 @@ app.post('/', (req, res) => {
 });
 
 app.use(rawBody);
-app.use(express.json());
 app.use('/user', users);
 app.use('/util', utils);
 app.use('/payment', transactions);
