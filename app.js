@@ -27,7 +27,22 @@ let users = express.Router();
 let transactions = express.Router();
 let utils = express.Router();
 
-app.use(express.json());
+function rawBody(req, res, next) {
+	req.setEncoding('utf8');
+
+	var data = '';
+
+	req.on('data', function (chunk) {
+		data += chunk;
+	});
+
+	req.on('end', function () {
+		req.rawBody = data;
+
+		next();
+	});
+}
+
 app.use(cors);
 Client.init(process.env.COINBASE_API_KEY);
 // app.use(express.urlencoded({extended = true})); // For Form data
@@ -53,8 +68,9 @@ transactions.post('/charge', async (req, res) => {
   // Each charge expires in 1Hr. That is, user has 1Hr to make that payment.
 });
 
+
 transactions.post('/webhook', async (req, res) => {
-  const rawBody = req.body;
+  const rawBody = req.rawBody;
   const signature = req.headers['x-cc-webhook-signature'];
   const webhookSecret = process.env.WEBHOOK_SECRET;
 
@@ -173,6 +189,7 @@ app.post('/',express.raw(), (req, res) => {
   res.status(200).send(hello_string);
 });
 
+app.use(rawBody);
 app.use('/user', users);
 app.use('/util', utils);
 app.use('/payment', transactions);
