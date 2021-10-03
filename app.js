@@ -28,19 +28,19 @@ let transactions = express.Router();
 let utils = express.Router();
 
 function rawBody(req, res, next) {
-	req.setEncoding('utf8');
+  req.setEncoding('utf8');
 
-	var data = '';
+  var data = '';
 
-	req.on('data', function (chunk) {
-		data += chunk;
-	});
+  req.on('data', function (chunk) {
+    data += chunk;
+  });
 
-	req.on('end', function () {
-		req.rawBody = data;
+  req.on('end', function () {
+    req.rawBody = data;
 
-		next();
-	});
+    next();
+  });
 }
 
 app.use(cors);
@@ -68,29 +68,28 @@ transactions.post('/charge', async (req, res) => {
   // Each charge expires in 1Hr. That is, user has 1Hr to make that payment.
 });
 
-
 transactions.post('/webhook', async (req, res) => {
   const rawBody = req.rawBody;
   const signature = req.headers['x-cc-webhook-signature'];
   const webhookSecret = process.env.WEBHOOK_SECRET;
 
   try {
-      const event = Webhook.verifyEventBody(rawBody, signature, webhookSecret);
-      if (event.type == 'charge:pending') {
-          // TODO: Received Order
-      }
-      if (event.type == 'charge:confirmed') {
-          // Everything went fine. Fulfill the order to the user
-          // Add the transaction details to the database
-          console.log("CONFIRMED!!");
-      }
-      if (event.type == 'charge:failed') {
-          // Payment didnt go through. Cancel the order
-      }
-      res.status(200).send(`success ${event.id}`);
+    const event = Webhook.verifyEventBody(rawBody, signature, webhookSecret);
+    if (event.type == 'charge:pending') {
+      // TODO: Received Order
+    }
+    if (event.type == 'charge:confirmed') {
+      // Everything went fine. Fulfill the order to the user
+      // Add the transaction details to the database
+      console.log('CONFIRMED!!');
+    }
+    if (event.type == 'charge:failed') {
+      // Payment didnt go through. Cancel the order
+    }
+    res.status(200).send(`success ${event.id}`);
   } catch (error) {
-      console.error(error);
-      res.status(400).send('failure!');
+    console.error(error);
+    res.status(400).send('failure!');
   }
 });
 
@@ -177,19 +176,28 @@ utils.put('/details', (req, res) => {
     });
 });
 
+utils.post('/', (req, res) => {
+  // Charge is the amount you are charging the customer for a particular item.
+  // Charge == Purchasing price.
+  res.status(200).send('Hello');
+  console.log(req.body);
+});
+
 app.get('/', (req, res) => {
   // Charge is the amount you are charging the customer for a particular item.
   // Charge == Purchasing price.
   res.status(200).send('Hello');
-    console.log(req.body);
+  console.log(req.body);
 });
 app.post('/', (req, res) => {
+  console.log(JSON.stringify(req.body));
   let hello_string = 'hello ' + req.body.name;
-    console.log(req.headers);
   res.status(200).send(hello_string);
 });
 
-app.use(rawBody);
+utils.use(express.json());
+users.use(express.json());
+transactions.use(rawBody);
 app.use('/user', users);
 app.use('/util', utils);
 app.use('/payment', transactions);
