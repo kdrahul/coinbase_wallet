@@ -1,13 +1,15 @@
+require('dotenv').config();
 let express = require('express');
 let app = express();
 let db = require('./db');
 let auth = require('./auth');
 let account = require('./user_account');
 const coinbase = require('coinbase-commerce-node');
+const { Webhook } = require('coinbase-commerce-node');
 const Client = coinbase.Client;
 const Charge = coinbase.resources.Charge;
 const port = process.env.PORT || 5959;
-const cors = require('cors')({"origin":"*"})
+const cors = require('cors')({ origin: '*' });
 
 // ERC - 1155 apis
 // const transferSingle = (req, res) => {};
@@ -26,12 +28,13 @@ let transactions = express.Router();
 let utils = express.Router();
 
 app.use(express.json());
-app.use(cors)
+app.use(cors);
+Client.init(process.env.COINBASE_API_KEY);
 // app.use(express.urlencoded({extended = true})); // For Form data
 
 // Helper functions
 
-transactions.post('/charge', (req, res) => {
+transactions.post('/charge', async (req, res) => {
   // Fields necessary to create a charge
   const chargeData = {
     // REQUIRED
@@ -45,11 +48,35 @@ transactions.post('/charge', (req, res) => {
     local_price: '', // Price in INR or USD or whatever
     metadata: {}, // Any extra info if necessary
   };
-    const charge = Charge.create(chargeData);
+  const charge = await Charge.create(chargeData);
   res.status(200).send(charge);
-    // Each charge expires in 1Hr. That is, user has 1Hr to make that payment.
+  // Each charge expires in 1Hr. That is, user has 1Hr to make that payment.
 });
 
+transactions.post('/webhook', async (req, res) => {
+  const rawBody = req.body;
+  const signature = req.headers['x-cc-webhook-signature'];
+  const webhookSecret = process.env.webhookSecret;
+
+  try {
+      const event = Webhook.verifyEventBody(rawBody, signature, webhookSecret);
+      if (event.type == 'charge:pending') {
+          // TODO: Received Order
+      }
+      if (event.type == 'charge:confirmed') {
+          // Everything went fine. Fulfill the order to the user
+          // Add the transaction details to the database
+          console.log("CONFIRMED!!");
+      }
+      if (event.type == 'charge:failed') {
+          // Payment didnt go through. Cancel the order
+      }
+      res.status(200).send(`success ${event.id}`);
+  } catch (error) {
+      console.error(error);
+      res.status(400).send('failure!');
+  }
+});
 
 transactions.post('/transaction_details', () => {}); // Gets all the details necessary to Coinbase API
 transactions.post('/store_transaction', () => {}); // Stores each transaction into the database
@@ -139,9 +166,9 @@ app.get('/', (req, res) => {
   // Charge == Purchasing price.
   res.status(200).send('Hello');
 });
-app.post('/',(req, res) => {
-    let hello_string = "hello " + req.body.name;
-    res.status(200).send(hello_string);
+app.post('/', (req, res) => {
+  let hello_string = 'hello ' + req.body.name;
+  res.status(200).send(hello_string);
 });
 
 app.use('/user', users);
