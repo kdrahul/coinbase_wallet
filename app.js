@@ -49,7 +49,7 @@ Client.init(process.env.COINBASE_API_KEY);
 
 // Helper functions
 
-transactions.post('/charge', async (req, res) => {
+transactions.post('/charge',express.json(), async (req, res) => {
   // Fields necessary to create a charge
   const chargeData = {
     // REQUIRED
@@ -68,7 +68,7 @@ transactions.post('/charge', async (req, res) => {
   // Each charge expires in 1Hr. That is, user has 1Hr to make that payment.
 });
 
-transactions.post('/webhook', async (req, res) => {
+transactions.post('/webhook',rawBody, async (req, res) => {
   const rawBody = req.rawBody;
   const signature = req.headers['x-cc-webhook-signature'];
   const webhookSecret = process.env.WEBHOOK_SECRET;
@@ -96,7 +96,7 @@ transactions.post('/webhook', async (req, res) => {
 transactions.post('/transaction_details', () => {}); // Gets all the details necessary to Coinbase API
 transactions.post('/store_transaction', () => {}); // Stores each transaction into the database
 
-users.post('/register', (req, res, next) => {
+users.post('/register',express.json(), (req, res, next) => {
   const walletId = req.body.wallet_id;
   auth
     .register(walletId, req.body.pin)
@@ -110,7 +110,7 @@ users.post('/register', (req, res, next) => {
       return res.status(400).send(err);
     });
 });
-users.post('/login', (req, res) => {
+users.post('/login',express.json(), (req, res) => {
   // Alter this based on what they send in their json
   const walletId = req.body.wallet_id;
   console.log(req.body.wallet_id);
@@ -125,7 +125,7 @@ users.post('/login', (req, res) => {
       res.status(400).send(err);
     });
 });
-users.get('/exist', (req, res) => {
+users.get('/exist',express.json(), (req, res) => {
   const walletId = req.body.wallet_id;
   if (!walletId) return res.status(400).json({ error: 'Bad Request' });
   account
@@ -137,7 +137,7 @@ users.get('/exist', (req, res) => {
       return res.status(400).send(err);
     });
 });
-users.delete('/deleteAccount', (req, res) => {
+users.delete('/deleteAccount',express.json(), (req, res) => {
   const id = req.body.wallet_id;
   account
     .removeUser(id)
@@ -183,21 +183,18 @@ utils.post('/', (req, res) => {
   console.log(req.body);
 });
 
-app.get('/', (req, res) => {
+app.get('/',express.json(), (req, res) => {
   // Charge is the amount you are charging the customer for a particular item.
   // Charge == Purchasing price.
   res.status(200).send('Hello');
   console.log(req.body);
 });
-app.post('/', (req, res) => {
+app.post('/',express.json(), (req, res) => {
   console.log(JSON.stringify(req.body));
   let hello_string = 'hello ' + req.body.name;
   res.status(200).send(hello_string);
 });
 
-utils.use(express.json());
-users.use(express.json());
-transactions.use(rawBody);
 app.use('/user', users);
 app.use('/util', utils);
 app.use('/payment', transactions);
