@@ -54,7 +54,7 @@ transactions.post('/charge', async (req, res) => {
 });
 
 transactions.post('/webhook', async (req, res) => {
-  const rawBody = req.body;
+  const rawBody = req;
   const signature = req.headers['x-cc-webhook-signature'];
   const webhookSecret = process.env.WEBHOOK_SECRET;
 
