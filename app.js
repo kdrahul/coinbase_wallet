@@ -53,31 +53,7 @@ transactions.post('/charge', async (req, res) => {
   // Each charge expires in 1Hr. That is, user has 1Hr to make that payment.
 });
 
-transactions.get('/webhook', async (req, res) => {
-  const rawBody = req.body;
-  const signature = req.headers['x-cc-webhook-signature'];
-  const webhookSecret = process.env.WEBHOOK_SECRET;
-
-  try {
-      const event = Webhook.verifyEventBody(rawBody, signature, webhookSecret);
-      if (event.type == 'charge:pending') {
-          // TODO: Received Order
-      }
-      if (event.type == 'charge:confirmed') {
-          // Everything went fine. Fulfill the order to the user
-          // Add the transaction details to the database
-          console.log("CONFIRMED!!");
-      }
-      if (event.type == 'charge:failed') {
-          // Payment didnt go through. Cancel the order
-      }
-      res.status(200).send(`success ${event.id}`);
-  } catch (error) {
-      console.error(error);
-      res.status(400).send('failure!');
-  }
-});
-transactions.post('/webhook', async (req, res) => {
+transactions.post('/webhook',express.raw(), async (req, res) => {
   const rawBody = req.body;
   const signature = req.headers['x-cc-webhook-signature'];
   const webhookSecret = process.env.WEBHOOK_SECRET;
