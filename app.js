@@ -30,7 +30,7 @@ let utils = express.Router();
 app.use(express.json());
 app.use(cors);
 Client.init(process.env.COINBASE_API_KEY);
-app.use(express.urlencoded({extended = true})); // For Form data
+// app.use(express.urlencoded({extended = true})); // For Form data
 
 // Helper functions
 
