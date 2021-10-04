@@ -11,45 +11,34 @@ const Charge = coinbase.resources.Charge;
 const port = process.env.PORT || 5959;
 const cors = require('cors')({ origin: '*' });
 
-// ERC - 1155 apis
-// const transferSingle = (req, res) => {};
-// const transferBatch = (req, res) => {};
-// const approvalForAll = (req, res) => {};
-// const URI = (req, res) => {};
-// const safeTransferFrom = (req, res) => {};
-// const safeBatchTransferFrom = (req, res) => {};
-// const balanceOf = (req, res) => {};
-// const balanceOfBatch = (req, res) => {};
-// const setApprovalForAll = (req, res) => {};
-// const isApprovedForAll = (req, res) => {};
-
 let users = express.Router();
 let transactions = express.Router();
 let utils = express.Router();
 
-function rawBody(req, res, next) {
+const rawBody = (req, res, next) => {
   req.setEncoding('utf8');
 
   var data = '';
 
-  req.on('data', function (chunk) {
+  req.on('data', (chunk) => {
     data += chunk;
   });
 
-  req.on('end', function () {
+  req.on('end', () => {
     req.rawBody = data;
 
     next();
   });
-}
+};
 
 app.use(cors);
 Client.init(process.env.COINBASE_API_KEY);
-// app.use(express.urlencoded({extended = true})); // For Form data
 
-// Helper functions
+////////////////////////////////////////////////////////////
+//  TRANSACTION APIs
+////////////////////////////////////////////////////////////
 
-transactions.post('/charge',express.json(), async (req, res) => {
+transactions.post('/charge', express.json(), async (req, res) => {
   // Fields necessary to create a charge
   const chargeData = {
     // REQUIRED
@@ -68,8 +57,8 @@ transactions.post('/charge',express.json(), async (req, res) => {
   // Each charge expires in 1Hr. That is, user has 1Hr to make that payment.
 });
 
-transactions.post('/webhook',rawBody, async (req, res) => {
-  const rawBody = req.rawBody;
+transactions.post('/webhook', rawBody, async (req, res) => {
+  const rawBody = req;
   const signature = req.headers['x-cc-webhook-signature'];
   const webhookSecret = process.env.WEBHOOK_SECRET;
 
@@ -77,6 +66,7 @@ transactions.post('/webhook',rawBody, async (req, res) => {
     const event = Webhook.verifyEventBody(rawBody, signature, webhookSecret);
     if (event.type == 'charge:pending') {
       // TODO: Received Order
+      db().collection('coinbaseTransactions').save(event.data);
     }
     if (event.type == 'charge:confirmed') {
       // Everything went fine. Fulfill the order to the user
@@ -96,7 +86,11 @@ transactions.post('/webhook',rawBody, async (req, res) => {
 transactions.post('/transaction_details', () => {}); // Gets all the details necessary to Coinbase API
 transactions.post('/store_transaction', () => {}); // Stores each transaction into the database
 
-users.post('/register',express.json(), (req, res, next) => {
+////////////////////////////////////////////////////////////
+//  USER APIs
+////////////////////////////////////////////////////////////
+
+users.post('/register', express.json(), (req, res, next) => {
   const walletId = req.body.wallet_id;
   auth
     .register(walletId, req.body.pin)
@@ -110,7 +104,7 @@ users.post('/register',express.json(), (req, res, next) => {
       return res.status(400).send(err);
     });
 });
-users.post('/login',express.json(), (req, res) => {
+users.post('/login', express.json(), (req, res) => {
   // Alter this based on what they send in their json
   const walletId = req.body.wallet_id;
   console.log(req.body.wallet_id);
@@ -125,7 +119,7 @@ users.post('/login',express.json(), (req, res) => {
       res.status(400).send(err);
     });
 });
-users.get('/exist',express.json(), (req, res) => {
+users.get('/exist', express.json(), (req, res) => {
   const walletId = req.body.wallet_id;
   if (!walletId) return res.status(400).json({ error: 'Bad Request' });
   account
@@ -137,7 +131,7 @@ users.get('/exist',express.json(), (req, res) => {
       return res.status(400).send(err);
     });
 });
-users.delete('/deleteAccount',express.json(), (req, res) => {
+users.delete('/deleteAccount', express.json(), (req, res) => {
   const id = req.body.wallet_id;
   account
     .removeUser(id)
@@ -149,6 +143,10 @@ users.delete('/deleteAccount',express.json(), (req, res) => {
     });
 });
 users.put('/username', () => {});
+
+////////////////////////////////////////////////////////////
+//  UTIL APIs
+////////////////////////////////////////////////////////////
 
 utils.get('/tokens', () => {});
 utils.get('/tickers', () => {});
@@ -176,20 +174,13 @@ utils.put('/details', (req, res) => {
     });
 });
 
-utils.post('/', (req, res) => {
+app.get('/', express.json(), (req, res) => {
   // Charge is the amount you are charging the customer for a particular item.
   // Charge == Purchasing price.
   res.status(200).send('Hello');
   console.log(req.body);
 });
-
-app.get('/',express.json(), (req, res) => {
-  // Charge is the amount you are charging the customer for a particular item.
-  // Charge == Purchasing price.
-  res.status(200).send('Hello');
-  console.log(req.body);
-});
-app.post('/',express.json(), (req, res) => {
+app.post('/', express.json(), (req, res) => {
   console.log(JSON.stringify(req.body));
   let hello_string = 'hello ' + req.body.name;
   res.status(200).send(hello_string);
