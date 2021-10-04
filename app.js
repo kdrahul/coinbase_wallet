@@ -39,18 +39,19 @@ Client.init(process.env.COINBASE_API_KEY);
 ////////////////////////////////////////////////////////////
 
 transactions.post('/charge', express.json(), async (req, res) => {
+    const data = req.body;
   // Fields necessary to create a charge
   const chargeData = {
     // REQUIRED
-    name: '', // Title of the product, 100 chars or less
-    description: '', // tag lines, or extra details about product. 200 chars or less
-    pricing_type: '', // Values: no_price | fixed_price
+    name: data.name, // Title of the product, 100 chars or less
+    description: data.description, // tag lines, or extra details about product. 200 chars or less
+    pricing_type: data.pricing_type, // Values: no_price | fixed_price
 
     // Optional
     // All these go into payment portal for reference to the user
     // regarding how much they want to pay, and for what item(s) they are paying.
-    local_price: '', // Price in INR or USD or whatever
-    metadata: {}, // Any extra info if necessary
+    local_price: data.local_price, // Price in INR or USD or whatever
+    metadata: data.metadata, // Any extra info if necessary
   };
   const charge = await Charge.create(chargeData);
   res.status(200).send(charge);
