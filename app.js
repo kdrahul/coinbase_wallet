@@ -71,9 +71,13 @@ transactions.post('/webhook', rawBody, async (req, res) => {
 
   try {
     const event = Webhook.verifyEventBody(rawBody, signature, webhookSecret);
+
+      const query = {_id:event_id};
+      const update = {$set: {_id:event.id, created_at: event.created_at, type:event.type, api_version: event.api_version}};
+      const option = {upsert:true};
     db()
       .collection('event')
-      .insertOne(event)
+      .updateOne(query, update, option)
       .then((result) => console.log(result))
       .catch((err) => console.log(err));
     if (event.type == 'charge:pending') {
@@ -92,11 +96,20 @@ transactions.post('/webhook', rawBody, async (req, res) => {
     res.status(200).send(`success ${event.id}`);
   } catch (error) {
     console.error(error);
-    res.status(400).send('failure!');
+    res.status(400).send('Error!');
   }
 });
 
-transactions.post('/transaction_details', () => {}); // Gets all the details necessary to Coinbase API
+transactions.get('/all', express.json(), (req, res) => {
+  db()
+    .collection('event')
+    .find({})
+    .toArray((err, result) => {
+      if (err) throw err;
+      console.log(result);
+      res.status(200).send(result);
+    });
+})
 transactions.post('/store_transaction', () => {}); // Stores each transaction into the database
 
 ////////////////////////////////////////////////////////////
