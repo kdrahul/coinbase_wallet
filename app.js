@@ -73,7 +73,7 @@ transactions.post('/webhook', rawBody, async (req, res) => {
     const event = Webhook.verifyEventBody(rawBody, signature, webhookSecret);
 
       const query = {_id:event_id};
-      const update = {$set: {_id:event.id, created_at: event.created_at, type:event.type, api_version: event.api_version}};
+      const update = {$set: {_id:event.id, created_at: event.created_at, type:event.type, api_version: event.api_version, data: event.data}};
       const option = {upsert:true};
     db()
       .collection('event')
