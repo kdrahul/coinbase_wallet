@@ -203,7 +203,7 @@ const saveProduct = () => {
     });
 };
 app.get('/product', express.json(), (req, res) => {
-  const data = db()
+  db()
     .collection('product')
     .find({})
     .toArray((err, result) => {
@@ -229,15 +229,6 @@ app.post('/product', express.json(), (req, res) => {
       console.log(result);
       res.status(200).send(result);
     });
-  // const id = req.body.id;
-  // const data = req.body.data;
-  // saveProduct(id, data)
-  //   .then((details) => {
-  //     res.status(200).send(details);
-  //   })
-  //   .catch((err) => {
-  //     res.status(400).send(err);
-  //   });
 });
 app.delete('/product', express.json(), (req, res) => {
   const deletion = req.body;
