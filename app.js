@@ -71,6 +71,11 @@ transactions.post('/webhook', rawBody, async (req, res) => {
 
   try {
     const event = Webhook.verifyEventBody(rawBody, signature, webhookSecret);
+    db()
+      .collection('event')
+      .insertOne(event)
+      .then((result) => console.log(result))
+      .catch((err) => console.log(err));
     if (event.type == 'charge:pending') {
       // TODO: Received Order
       console.log(event.id + ': PENDING!!');
