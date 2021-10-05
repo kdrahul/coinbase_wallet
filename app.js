@@ -54,12 +54,18 @@ transactions.post('/charge', express.json(), async (req, res) => {
     metadata: data.metadata, // Any extra info if necessary
   };
   const charge = await Charge.create(chargeData);
+  db()
+    .collection('charges')
+    .insertOne(charge, (err, result) => {
+      if (err) console.log(err);
+      else console.log(result);
+    });
   res.status(200).send(charge);
   // Each charge expires in 1Hr. That is, user has 1Hr to make that payment.
 });
 
-transactions.post('/webhook', rawBody, async (req, res) => {
-  const rawBody = req;
+transactions.post('/webhook', async (req, res) => {
+  const rawBody = req.rawBody;
   const signature = req.headers['x-cc-webhook-signature'];
   const webhookSecret = process.env.WEBHOOK_SECRET;
 
@@ -67,18 +73,15 @@ transactions.post('/webhook', rawBody, async (req, res) => {
     const event = Webhook.verifyEventBody(rawBody, signature, webhookSecret);
     if (event.type == 'charge:pending') {
       // TODO: Received Order
-      db().collection('coinbaseTransactions').save(event.data);
       console.log(event.id + ': PENDING!!');
     }
     if (event.type == 'charge:confirmed') {
       // Everything went fine. Fulfill the order to the user
       // Add the transaction details to the database
-      db().collection('coinbaseTransactions').save(event.data);
       console.log(event.id + ': CONFIRMED!!');
     }
     if (event.type == 'charge:failed') {
       // Payment didnt go through. Cancel the order
-      db().collection('coinbaseTransactions').save(event.data);
       console.log(event.id + ': Failed!!');
     }
     res.status(200).send(`success ${event.id}`);
@@ -225,16 +228,16 @@ app.post('/product', express.json(), (req, res) => {
   db()
     .collection('product')
     .insertOne(data)
-    .then(result => res.status(200).send(result))
-    .catch(err => res.status(400).send(err));
+    .then((result) => res.status(200).send(result))
+    .catch((err) => res.status(400).send(err));
 });
 app.delete('/product', express.json(), (req, res) => {
   const deletion = req.body;
   db()
     .collection('product')
     .deleteOne({ _id: deletion.id })
-    .then(result => res.status(200).send(result))
-    .catch(err => res.status(400).send(err))
+    .then((result) => res.status(200).send(result))
+    .catch((err) => res.status(400).send(err));
 });
 
 app.use('/user', users);
