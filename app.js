@@ -39,7 +39,7 @@ Client.init(process.env.COINBASE_API_KEY);
 ////////////////////////////////////////////////////////////
 
 transactions.post('/charge', express.json(), async (req, res) => {
-    const data = req.body;
+  const data = req.body;
   // Fields necessary to create a charge
   const chargeData = {
     // REQUIRED
@@ -68,14 +68,18 @@ transactions.post('/webhook', rawBody, async (req, res) => {
     if (event.type == 'charge:pending') {
       // TODO: Received Order
       db().collection('coinbaseTransactions').save(event.data);
+      console.log(event.id + ': PENDING!!');
     }
     if (event.type == 'charge:confirmed') {
       // Everything went fine. Fulfill the order to the user
       // Add the transaction details to the database
-      console.log('CONFIRMED!!');
+      db().collection('coinbaseTransactions').save(event.data);
+      console.log(event.id + ': CONFIRMED!!');
     }
     if (event.type == 'charge:failed') {
       // Payment didnt go through. Cancel the order
+      db().collection('coinbaseTransactions').save(event.data);
+      console.log(event.id + ': Failed!!');
     }
     res.status(200).send(`success ${event.id}`);
   } catch (error) {
@@ -185,6 +189,65 @@ app.post('/', express.json(), (req, res) => {
   console.log(JSON.stringify(req.body));
   let hello_string = 'hello ' + req.body.name;
   res.status(200).send(hello_string);
+});
+
+////////////////////////////////////////////////////////////
+//  Products APIs
+////////////////////////////////////////////////////////////
+const saveProduct = () => {
+  const collection = db().collection('product');
+  return collection
+    .updateOne({ _id: id }, { $set: { data } }, { upsert: true })
+    .then(() => {
+      return data;
+    });
+};
+app.get('/product', express.json(), (req, res) => {
+  const data = db()
+    .collection('product')
+    .find({})
+    .toArray((err, result) => {
+      if (err) throw err;
+      console.log(result);
+      res.status(200).send(result);
+    });
+});
+
+app.post('/product', express.json(), (req, res) => {
+  const product = req.body;
+  const data = {
+    _id: product.id,
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    datetime: product.datetime,
+  };
+  db()
+    .collection('product')
+    .insertOne(data, (err, result) => {
+      if (err) throw err;
+      console.log(result);
+      res.status(200).send(result);
+    });
+  // const id = req.body.id;
+  // const data = req.body.data;
+  // saveProduct(id, data)
+  //   .then((details) => {
+  //     res.status(200).send(details);
+  //   })
+  //   .catch((err) => {
+  //     res.status(400).send(err);
+  //   });
+});
+app.delete('/product', express.json(), (req, res) => {
+  const deletion = req.body;
+  db()
+    .collection('product')
+    .deleteOne({ _id: deletion.id }, (err, result) => {
+      if (err) throw err;
+      console.log(result);
+      res.status(200).send(result);
+    });
 });
 
 app.use('/user', users);
