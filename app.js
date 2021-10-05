@@ -64,7 +64,7 @@ transactions.post('/charge', express.json(), async (req, res) => {
   // Each charge expires in 1Hr. That is, user has 1Hr to make that payment.
 });
 
-transactions.post('/webhook', async (req, res) => {
+transactions.post('/webhook', rawBody, async (req, res) => {
   const rawBody = req.rawBody;
   const signature = req.headers['x-cc-webhook-signature'];
   const webhookSecret = process.env.WEBHOOK_SECRET;
