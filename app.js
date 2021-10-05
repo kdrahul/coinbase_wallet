@@ -224,21 +224,17 @@ app.post('/product', express.json(), (req, res) => {
   };
   db()
     .collection('product')
-    .insertOne(data, (err, result) => {
-      if (err) throw err;
-      console.log(result);
-      res.status(200).send(result);
-    });
+    .insertOne(data)
+    .then(result => res.status(200).send(result))
+    .catch(err => res.status(400).send(err));
 });
 app.delete('/product', express.json(), (req, res) => {
   const deletion = req.body;
   db()
     .collection('product')
-    .deleteOne({ _id: deletion.id }, (err, result) => {
-      if (err) throw err;
-      console.log(result);
-      res.status(200).send(result);
-    });
+    .deleteOne({ _id: deletion.id })
+    .then(result => res.status(200).send(result))
+    .catch(err => res.status(400).send(err))
 });
 
 app.use('/user', users);
